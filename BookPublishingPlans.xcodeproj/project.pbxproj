@@ -14,7 +14,7 @@
 		A21B3C2F2CF61D7400BCC97D /* Exceptions for "BookPublishingPlans" folder in "BookPublishingPlans" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				Info.plist,
+				App/Info.plist,
 			);
 			target = A21B3C1C2CF61D7200BCC97D /* BookPublishingPlans */;
 		};
@@ -147,7 +147,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = AP6UP6P7WQ;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BookPublishingPlans/Info.plist;
+				INFOPLIST_FILE = BookPublishingPlans/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -175,7 +175,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = AP6UP6P7WQ;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BookPublishingPlans/Info.plist;
+				INFOPLIST_FILE = BookPublishingPlans/App/Info.plist;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
