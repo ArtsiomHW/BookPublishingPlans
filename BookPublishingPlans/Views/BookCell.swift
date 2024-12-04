@@ -18,7 +18,6 @@ final class BookCell: UITableViewCell {
     
     func configureCell(with book: Book) {
         
-        let baseURL = "https://fantlab.ru"
         var author = book.author
         
         if let regex = try? NSRegularExpression(pattern: "\\[.*?\\]", options: []) {
@@ -33,51 +32,10 @@ final class BookCell: UITableViewCell {
         authorLabel.text = author
         releaseDateLabel.text = "Выйдет \(book.date)г."
         
-        guard let coverId = book.metaInfo?.bookId else {
-            DispatchQueue.main.async { [weak self] in
-                guard let self else {return}
-                cover.image = UIImage(named: "noCover")
-            }
+        guard let coverData = book.coverData else {
+            cover.image = UIImage(named: "noCover")
             return
         }
-        
-        networkManager.fetchBookDetails(bookId: coverId) { [weak self] result in
-            guard let self else {return}
-            
-            switch result {
-            case .success(let details):
-                let bookCoverPath = details.previewCover
-                
-                guard let bookCoverPath = bookCoverPath else {
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self else {return}
-                        cover.image = UIImage(named: "noCover")
-                    }
-                    return
-                }
-                
-                guard let fullURL = URL(string: baseURL + bookCoverPath) else {
-                    DispatchQueue.main.async { [weak self] in
-                        guard let self else {return}
-                        cover.image = UIImage(named: "noCover")
-                    }
-                    return
-                }
-                
-                networkManager.fetchImage(from: fullURL) { [weak self] result in
-                    guard let self else {return}
-                    
-                    switch result {
-                    case .success(let coverData):
-                        cover.image = UIImage(data: coverData)
-                    case .failure(let error):
-                        cover.image = UIImage(named: "noCover")
-                        print(error)
-                    }
-                }
-            case .failure(let error):
-                print(error)
-            }
-        }
+        cover.image = UIImage(data: coverData)
     }
 }

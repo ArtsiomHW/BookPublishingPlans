@@ -44,6 +44,8 @@ enum NetworkError: Error {
     case invalidURL
     case noData
     case decodingError
+    case noBookID
+    case URLConversionError
 }
 
 final class NetworkingManager {
@@ -51,9 +53,9 @@ final class NetworkingManager {
     static let shared = NetworkingManager()
     
     private init() {}
-
     
-    func fetchPlans(of publisher: String,completion: @escaping(Result<BookPreview, NetworkError>) -> Void) {
+    
+    func fetchPlans(of publisher: String,completion: @escaping(Result<PublisherPlans, NetworkError>) -> Void) {
         let url: URL
         
         switch publisher {
@@ -78,7 +80,7 @@ final class NetworkingManager {
             }
             
             do {
-                let dataModel = try JSONDecoder().decode(BookPreview.self, from: data)
+                let dataModel = try JSONDecoder().decode(PublisherPlans.self, from: data)
                 DispatchQueue.main.async {
                     completion(.success(dataModel))
                 }
@@ -112,7 +114,7 @@ final class NetworkingManager {
         }.resume()
     }
     
-    func fetchImage(from url: URL, completion: @escaping(Result<Data, NetworkError>) -> Void) {
+    func fetchData(from url: URL, completion: @escaping(Result<Data, NetworkError>) -> Void) {
         DispatchQueue.global().async {
             guard let cover = try? Data(contentsOf: url) else {
                 completion(.failure(.noData))
@@ -122,6 +124,11 @@ final class NetworkingManager {
                 completion(.success(cover))
             }
         }
+    }
+   
+    func constructCoverURL(with previewCover: String?) -> String? {
+        guard let cover = previewCover else { return "1" }
+        return "https://fantlab.ru/\(cover)"
     }
     
 }

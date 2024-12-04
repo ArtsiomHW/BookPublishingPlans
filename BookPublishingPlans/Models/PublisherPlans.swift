@@ -7,8 +7,7 @@
 
 import Foundation
 
-
-struct BookPreview: Decodable {
+struct PublisherPlans: Decodable {
     let books: [Book]
     let publisher: String
     
@@ -25,6 +24,8 @@ struct Book: Decodable {
     let name: String
     let series: String
     let metaInfo: MetaInfo?
+    var coverURL: String?
+    var coverData: Data?
     
     enum CodingKeys: String, CodingKey {
         case author = "autors"
