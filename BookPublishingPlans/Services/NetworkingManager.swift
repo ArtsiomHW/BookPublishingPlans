@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Alamofire
 
 enum Publisher: CaseIterable {
     case azbuka
@@ -54,8 +55,7 @@ final class NetworkingManager {
     
     private init() {}
     
-    
-    func fetchPlans(of publisher: String,completion: @escaping(Result<PublisherPlans, NetworkError>) -> Void) {
+    func getApiURL(for publisher: String) -> URL {
         let url: URL
         
         switch publisher {
@@ -65,70 +65,50 @@ final class NetworkingManager {
             url = Publisher.act.url
         case Publisher.fanzon.name:
             url = Publisher.fanzon.url
-        case Publisher.eksmo.name:
-            url = Publisher.eksmo.url
         default:
-            completion(.failure(.invalidURL))
-            return
+            url = Publisher.eksmo.url
         }
         
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            guard let data else {
-                print(error ?? "No description for error")
-                completion(.failure(.noData))
-                return
-            }
-            
-            do {
-                let dataModel = try JSONDecoder().decode(PublisherPlans.self, from: data)
-                DispatchQueue.main.async {
-                    completion(.success(dataModel))
-                }
-                
-            } catch {
-                print(error)
-            }
-            
-        }.resume()
-    }
-    
-    func fetchBookDetails(bookId: Int, completion: @escaping (Result<BookDetails, NetworkError>) -> Void) {
-        let url = URL(string: "https://api.fantlab.ru/work/\(bookId)")!
-        
-        URLSession.shared.dataTask(with: url) { data, _, error in
-            guard let data = data else {
-                print(error ?? "No description for error")
-                completion(.failure(.noData))
-                return
-            }
-            
-            do {
-                let bookDetails = try JSONDecoder().decode(BookDetails.self, from: data)
-                DispatchQueue.main.async {
-                    completion(.success(bookDetails))
-                }
-            } catch {
-                print(error)
-                completion(.failure(.decodingError))
-            }
-        }.resume()
-    }
-    
-    func fetchData(from url: URL, completion: @escaping(Result<Data, NetworkError>) -> Void) {
-        DispatchQueue.global().async {
-            guard let cover = try? Data(contentsOf: url) else {
-                completion(.failure(.noData))
-                return
-            }
-            DispatchQueue.main.async {
-                completion(.success(cover))
-            }
-        }
+        return url
     }
    
-    func constructCoverURL(with previewCover: String?) -> String? {
-        guard let cover = previewCover else { return "1" }
-        return "https://fantlab.ru/\(cover)"
+   
+    func fetch<T: Decodable>(
+        _ type: T.Type,
+        from url: URL,
+        completion: @escaping(Result<T, AFError>) -> Void
+    ) {
+        AF.request(url)
+            .validate()
+            .responseDecodable(of: T.self) { response in
+                switch response.result {
+                case .success(let data):
+                    completion(.success(data))
+                case .failure(let error):
+                    completion(.failure(error))
+                    print("Хз какая ошибка ______ ")
+                }
+            }
+    }
+    
+    
+    func fetchData(from url: URL, completion: @escaping(Result<Data, AFError>) -> Void) {
+        AF.request(url)
+            .validate()
+            .responseData { dataResponse in
+                switch dataResponse.result {
+                case .success(let data):
+                    completion(.success(data))
+                case .failure(let error):
+                    completion(.failure(AFError.createURLRequestFailed(error: error)))
+                }
+            }
+        
+    }
+    
+    func constructCoverURL(with previewCover: String) -> URL? {
+        let fullCoverURL = "https://fantlab.ru/\(previewCover)"
+        return URL(string: fullCoverURL)
     }
     
 }

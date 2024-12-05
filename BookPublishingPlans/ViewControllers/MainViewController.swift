@@ -41,8 +41,11 @@ final class MainViewController: UITableViewController {
         return cell
     }
     
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let indexPath = tableView.indexPathForSelectedRow {
+            let settingsVC = segue.destination as? BookDetailsViewController
+            settingsVC?.bookDetails = books[indexPath.row]
+        }
     }
 }
 
@@ -80,7 +83,10 @@ extension MainViewController {
     
     private func fetchAllData(for publisher: String, completion: @escaping([Book]) -> Void) {
         
-        networkManager.fetchPlans(of: publisher) { result in
+        let publisherURL = networkManager.getApiURL(for: publisher)
+        
+        networkManager.fetch(PublisherPlans.self, from: publisherURL) { [weak self] result in
+            guard let self else { return }
             let dispatchGroup = DispatchGroup()
             var detailedBooks: [Book] = []
             
@@ -92,31 +98,36 @@ extension MainViewController {
             }
             
             for (index, book) in detailedBooks.enumerated() {
-                
-                
+
                 guard let bookID = book.metaInfo?.bookId else {
                     print(NetworkError.noBookID)
                     continue
                 }
                 
                 dispatchGroup.enter()
-                self.networkManager.fetchBookDetails(bookId: bookID) { [weak self] result in
+                let fullCoverURL = URL(string: "https://api.fantlab.ru/work/\(bookID)")!
+                
+                networkManager.fetch(BookDetails.self, from: fullCoverURL) { [weak self] result in
                     defer { dispatchGroup.leave() }
                     guard let self else { return }
                     
                     switch result {
                     case .success(let bookDetails):
                         let partOfURL = bookDetails.previewCover
-                        detailedBooks[index].coverURL = networkManager.constructCoverURL(with: partOfURL)
-                        print(detailedBooks[index].coverURL ?? "")
+                        let bookRating = bookDetails.ratingInfo?.rating
+                                            
+                        detailedBooks[index].bookRating = bookRating
                         
-                        guard let url = detailedBooks[index].coverURL, let coverURL = URL(string: url) else {
+                        guard let url = partOfURL else { return }
+                        let constructURL = networkManager.constructCoverURL(with: url)
+
+                        guard let fullCoverURL = constructURL else {
                             print(NetworkError.invalidURL)
                             return
                         }
                                                 
                         dispatchGroup.enter()
-                        self.networkManager.fetchData(from: coverURL) { result in
+                        self.networkManager.fetchData(from: fullCoverURL) { result in
                             defer { dispatchGroup.leave() }
                             
                             switch result {
@@ -131,16 +142,13 @@ extension MainViewController {
                         print(error)
                     }
                 }
-                
-                              
             }
             
             dispatchGroup.notify(queue: .main) {
                 completion(detailedBooks)
             }
-            
         }
-        
+                
     }
     
 }
